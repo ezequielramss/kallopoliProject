@@ -20,11 +20,12 @@ public class SegurancaConfig {
         var csrf = CookieCsrfTokenRepository.withHttpOnlyFalse();
         csrf.setCookiePath("/");
         http.authorizeHttpRequests(a -> a
-            .requestMatchers("/login.html", "/js/login.js", "/css/**", "/fonts/**", "/img/**", "/icons.svg", "/favicon.ico", "/csrf").permitAll()
+            .requestMatchers("/login.html", "/js/login.js", "/css/**", "/fonts/**", "/img/**", "/icons.svg", "/favicon.ico", "/csrf", "/webhook/whatsapp", "/dev/whatsapp/**").permitAll()
             .requestMatchers("/api/**").authenticated()
             .requestMatchers("/actuator/health").authenticated()
             .anyRequest().permitAll())
-          .csrf(c -> c.csrfTokenRepository(csrf).csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
+          .csrf(c -> c.csrfTokenRepository(csrf).csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+              .ignoringRequestMatchers("/webhook/whatsapp", "/dev/whatsapp/**"))
           .formLogin(f -> f.loginPage("/login.html").loginProcessingUrl("/login")
               .failureHandler(new HandlerFalhaLogin(jdbc)).successHandler(new HandlerSucessoLogin(jdbc)).permitAll())
           .logout(l -> l.logoutUrl("/logout").logoutSuccessUrl("/login.html").invalidateHttpSession(true).deleteCookies("JSESSIONID"))

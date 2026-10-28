@@ -1,0 +1,11 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/parceiro90}
+    username: ${DATABASE_USER:parceiro}
+    password: ${DATABASE_PASSWORD:parceiro}
+app:
+  seed:
+    enabled: true

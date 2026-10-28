@@ -1,0 +1,16 @@
+pilulas:
+  - id: RASCUNHO-01
+    status: RASCUNHO
+    texto: "Rascunho para substituição pela Kallopolli: combinar o próximo passo com a equipe pode deixar a rotina mais clara."
+  - id: RASCUNHO-02
+    status: RASCUNHO
+    texto: "Rascunho para substituição pela Kallopolli: pedir uma orientação específica ajuda a conversa a ir direto ao ponto."
+  - id: RASCUNHO-03
+    status: RASCUNHO
+    texto: "Rascunho para substituição pela Kallopolli: uma pausa combinada pode ajudar a equipe a organizar o ritmo do turno."
+  - id: RASCUNHO-04
+    status: RASCUNHO
+    texto: "Rascunho para substituição pela Kallopolli: uma dúvida compartilhada pode ajudar outras pessoas da equipe também."
+  - id: RASCUNHO-05
+    status: RASCUNHO
+    texto: "Rascunho para substituição pela Kallopolli: combinar quem faz cada etapa pode facilitar a troca de turno."

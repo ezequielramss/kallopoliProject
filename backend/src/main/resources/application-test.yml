@@ -5,3 +5,9 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+APP_CRYPTO_KEY: test-only-secret-key-value-32-characters-long
+APP_HASH_KEY: test-only-hash-key-value-32-characters-long
+app:
+  whatsapp:
+    app-secret: test-only-meta-app-secret
+    verify-token: test-only-webhook-verify-token

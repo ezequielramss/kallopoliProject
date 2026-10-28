@@ -9,7 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile({"dev", "prod"})
+@Profile({"dev", "prod", "homolog"})
 public class SeedUsuarios implements ApplicationRunner {
     private final JdbcTemplate jdbc;
     private final PasswordEncoder encoder;

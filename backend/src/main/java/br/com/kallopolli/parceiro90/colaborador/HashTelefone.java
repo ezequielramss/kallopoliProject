@@ -8,9 +8,11 @@ import javax.crypto.spec.SecretKeySpec;
 public final class HashTelefone {
     private HashTelefone() { }
     public static String gerar(String telefone) {
+        return gerar(telefone, System.getenv("APP_HASH_KEY"));
+    }
+    public static String gerar(String telefone, String key) {
         if (telefone == null || telefone.isBlank()) return null;
         try {
-            String key = System.getenv("APP_HASH_KEY");
             if (key == null || key.isBlank()) throw new IllegalStateException("APP_HASH_KEY não configurada.");
             String normalizado = telefone.replaceAll("\\D", "");
             Mac mac = Mac.getInstance("HmacSHA256"); mac.init(new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));

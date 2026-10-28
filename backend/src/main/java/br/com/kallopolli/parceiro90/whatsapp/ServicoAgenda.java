@@ -78,7 +78,7 @@ public class ServicoAgenda {
         String texto; String tipoEnvio;
         if ("PONTE".equals(item.tipo())) { texto = conteudo.ponte(item.dia()); tipoEnvio = "CADENCIA_PONTE"; }
         else if ("PILULA".equals(item.tipo()) && podeEnviarPilula(item.colaboradorId())) { texto = conteudo.pilula(item.dia()); tipoEnvio = "CADENCIA_PILULA"; }
-        else { texto = conteudo.checkin(item.dia()); tipoEnvio = "CADENCIA_CHECKIN"; }
+        else { texto = conteudo.checkin(item.dia(),proximaVariacao(item.colaboradorId())); tipoEnvio = "CADENCIA_CHECKIN"; }
         ResultadoEnvio resultado = envios.paraColaborador(item.colaboradorId(), tipoEnvio, texto, null, List.of(), List.of(), false);
         marcar(item, resultado.enviado() ? "ENVIADA" : "FALHA", resultado.motivo());
         if (resultado.enviado()) atualizarProximoContato(item.colaboradorId());
@@ -87,6 +87,10 @@ public class ServicoAgenda {
     private boolean podeEnviarPilula(String colaboradorId) {
         Integer depois = jdbc.queryForObject("SELECT count(*) FROM mensagem_saida WHERE colaborador_id=? AND status IN ('ENVIADA','ENTREGUE','LIDA') AND enviada_em > COALESCE((SELECT max(enviada_em) FROM mensagem_saida WHERE colaborador_id=? AND tipo='CADENCIA_PILULA'),to_timestamp(0)) AND tipo<>'CADENCIA_PILULA'", Integer.class, colaboradorId, colaboradorId);
         return depois != null && depois >= 3;
+    }
+    private int proximaVariacao(String colaboradorId) {
+        Integer enviados=jdbc.queryForObject("SELECT count(*) FROM mensagem_saida WHERE colaborador_id=? AND tipo='CADENCIA_CHECKIN' AND status IN ('ENVIADA','ENTREGUE','LIDA')",Integer.class,colaboradorId);
+        return enviados==null?0:enviados;
     }
     private boolean janelaPermitida(Instant instante) {
         LocalTime hora = instante.atZone(configZone()).toLocalTime();

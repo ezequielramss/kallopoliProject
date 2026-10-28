@@ -17,5 +17,8 @@ class CadenciaTest {
         assertFalse(PoliticaHorario.permite(LocalTime.of(21,30),LocalTime.of(17,0),LocalTime.of(22,0),LocalTime.of(21,0),LocalTime.of(8,0)));
         assertFalse(PoliticaHorario.permite(LocalTime.of(7,30),LocalTime.of(7,0),LocalTime.of(22,0),LocalTime.of(21,0),LocalTime.of(8,0)));
     }
+    @Test void alternaPerguntasMesmoQuandoOsDiasDeEnvioCoincidem(){
+        var conteudo=new ConteudoCadencia();assertNotEquals(conteudo.checkin(11,0),conteudo.checkin(14,1));
+    }
     private CadenciaProperties.Faixa faixa(int inicio,int fim,int intervalo){var f=new CadenciaProperties.Faixa();f.setFaixa(List.of(inicio,fim));f.setIntervalo(intervalo);return f;}
 }

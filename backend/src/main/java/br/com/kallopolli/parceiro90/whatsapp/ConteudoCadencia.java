@@ -21,8 +21,11 @@ public class ConteudoCadencia {
         } catch (Exception ex) { throw new IllegalStateException("Conteúdo local de cadência inválido."); }
     }
     public String checkin(int dia) {
+        return checkin(dia,dia);
+    }
+    public String checkin(int dia,int sequencia) {
         Fase fase = fases.stream().filter(f -> dia >= f.inicio() && dia <= f.fim()).findFirst().orElseThrow();
-        return fase.mensagens().get(Math.floorMod(dia - fase.inicio(), fase.mensagens().size()));
+        return fase.mensagens().get(Math.floorMod(sequencia, fase.mensagens().size()));
     }
     public String ponte(int dia) { return pontes.get(Math.floorMod(dia, pontes.size())); }
     public String pilula(int numero) { return pilulas.get(Math.floorMod(numero, pilulas.size())).texto(); }

@@ -3,8 +3,8 @@ spring:
     name: parceiro-90-dias
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/parceiro90}
-    username: ${DATABASE_USER:parceiro}
-    password: ${DATABASE_PASSWORD:parceiro}
+    username: ${DATABASE_USER:}
+    password: ${DATABASE_PASSWORD:}
   jpa:
     open-in-view: false
     hibernate:

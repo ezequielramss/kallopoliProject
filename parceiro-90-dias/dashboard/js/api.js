@@ -1,15 +1,26 @@
-const USE_MOCK = true;
+const USE_MOCK = false;
 const MOCK_BASE = "mock";
 const MOCK_PERFIL = "RH";
 
 async function request(path, mockFile, options = {}) {
   const headers = { Accept: "application/json", ...options.headers };
-  const response = await fetch(USE_MOCK ? `${MOCK_BASE}/${mockFile}` : path, { ...options, headers });
+  const method = (options.method || "GET").toUpperCase();
+  if (!USE_MOCK && !["GET", "HEAD", "OPTIONS"].includes(method)) {
+    let csrf = document.cookie.split("; ").find((cookie) => cookie.startsWith("XSRF-TOKEN="))?.split("=").slice(1).join("=");
+    if (!csrf) {
+      await fetch("/csrf", { credentials: "same-origin" });
+      csrf = document.cookie.split("; ").find((cookie) => cookie.startsWith("XSRF-TOKEN="))?.split("=").slice(1).join("=");
+    }
+    if (csrf) headers["X-XSRF-TOKEN"] = decodeURIComponent(csrf);
+  }
+  const response = await fetch(USE_MOCK ? `${MOCK_BASE}/${mockFile}` : path, { ...options, method, headers, credentials: "same-origin" });
   if (response.status === 401) {
     const error = new Error("Sua sessão expirou. Entre novamente para continuar.");
     error.status = 401;
+    window.location.assign("/login.html");
     throw error;
   }
+  if (response.status === 403) throw new Error("Acesso restrito para este perfil.");
   if (!response.ok) throw new Error(`Não foi possível carregar os dados (${response.status}).`);
   return response.json();
 }
@@ -38,6 +49,21 @@ function getRelatos(params = {}) {
   if (params.status) query.set("status", params.status);
   return request(`/api/relatos${query.size ? `?${query}` : ""}`, "relatos.json");
 }
+function getRelato(protocolo) { return request(`/api/relatos/${encodeURIComponent(protocolo)}`); }
+function atualizarRelato(protocolo, dados) {
+  return request(`/api/relatos/${encodeURIComponent(protocolo)}`, undefined, {
+    method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dados)
+  });
+}
+async function logout() {
+  let csrf = document.cookie.split("; ").find((cookie) => cookie.startsWith("XSRF-TOKEN="))?.split("=").slice(1).join("=");
+  if (!csrf) {
+    await fetch("/csrf", { credentials: "same-origin" });
+    csrf = document.cookie.split("; ").find((cookie) => cookie.startsWith("XSRF-TOKEN="))?.split("=").slice(1).join("=");
+  }
+  await fetch("/logout", { method: "POST", credentials: "same-origin", headers: { "X-XSRF-TOKEN": decodeURIComponent(csrf || "") } });
+  window.location.replace("/login.html");
+}
 async function getBemestar(profile = MOCK_PERFIL) {
   if (USE_MOCK && profile === "GERENTE") return request("/api/bem-estar", "bemestar-gerente.json");
   const data = await request("/api/bem-estar", "bemestar.json");
@@ -61,4 +87,4 @@ async function getDashboardData() {
   return { kpis, colaboradores, alertas };
 }
 
-export { USE_MOCK, getKpis, getColaboradores, getLinhaDoTempo, getPerfil, getAlertas, getRelatos, getBemestar, getSerieMensal, gerarRelatorio, getDashboardData };
+export { USE_MOCK, getKpis, getColaboradores, getLinhaDoTempo, getPerfil, getAlertas, getRelatos, getRelato, atualizarRelato, logout, getBemestar, getSerieMensal, gerarRelatorio, getDashboardData };

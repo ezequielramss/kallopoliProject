@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Acesso | Kallopolli</title>
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/login.css">
+  <script type="module" src="js/login.js"></script>
+</head>
+<body class="login-page">
+  <main class="login-card">
+    <div class="brand-mark"><img src="img/mcdonalds-logo.svg" alt=""></div>
+    <p class="eyebrow">KALLOPOLLI · PESSOAS &amp; CULTURA</p>
+    <h1>Entre no painel</h1>
+    <p class="login-intro">Use sua conta corporativa para continuar.</p>
+    <form id="login-form">
+      <label for="username">E-mail</label>
+      <input id="username" name="username" type="email" autocomplete="username" required maxlength="254">
+      <label for="password">Senha</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <p id="login-error" class="login-error" role="alert" hidden>Não foi possível entrar. Confira os dados ou tente novamente mais tarde.</p>
+      <button class="button button-primary" type="submit">Entrar</button>
+    </form>
+    <p class="login-confidential">Acesso restrito a pessoas autorizadas.</p>
+  </main>
+</body>
+</html>

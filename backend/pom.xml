@@ -25,7 +25,8 @@
   <build>
     <resources>
       <resource><directory>src/main/resources</directory></resource>
-      <resource><directory>${project.basedir}/../parceiro-90-dias/dashboard</directory><targetPath>static</targetPath><filtering>false</filtering></resource>
+      <resource><directory>${project.basedir}/../parceiro-90-dias/dashboard</directory><targetPath>static</targetPath><filtering>false</filtering><excludes><exclude>mock/**</exclude></excludes></resource>
+      <resource><directory>${project.basedir}/../parceiro-90-dias/dashboard/mock</directory><targetPath>dev-mock</targetPath><filtering>false</filtering></resource>
     </resources>
     <plugins>
       <plugin><groupId>org.springframework.boot</groupId><artifactId>spring-boot-maven-plugin</artifactId></plugin>

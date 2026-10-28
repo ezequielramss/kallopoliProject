@@ -45,3 +45,9 @@ Para executar o backend sem Docker, inicie PostgreSQL 16 e rode `backend/mvnw.cm
 No diretório `backend/`, execute `./mvnw verify` (Windows: `./mvnw.cmd verify`). Os testes de integração usam PostgreSQL Testcontainers e precisam de Docker. O workflow de CI roda o mesmo comando no push e em pull requests.
 
 Para produção, use o perfil `prod`, configure credenciais e segredos fortes por ambiente, configure HTTPS e não habilite carga fictícia. `APP_CRYPTO_KEY` e `APP_HASH_KEY` são obrigatórias. Consulte [`docs/seguranca-lgpd.md`](docs/seguranca-lgpd.md) e [`docs/decisoes.md`](docs/decisoes.md).
+
+## WhatsApp — Fase 3B
+
+O backend usa `FakeWhatsAppClient` nos perfis `dev` e `test`. No perfil dev, cadastre colaborador e líder pela API autenticada e simule recebimento com `POST /dev/whatsapp/entrada`. Mensagens de saída são gravadas cifradas na tabela `outbox_dev`; confira o banco local. `APP_TEMPO_FATOR` acelera o relógio usado pela jornada.
+
+Homologação/produção usam Meta Cloud API e exigem `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`, `APP_CRYPTO_KEY` e `APP_HASH_KEY`. Antes de enviar tráfego real, siga [`docs/whatsapp-setup.md`](docs/whatsapp-setup.md), submeta os modelos em [`docs/templates-whatsapp.md`](docs/templates-whatsapp.md) e obtenha aprovação dos templates. O webhook público é `/webhook/whatsapp`.

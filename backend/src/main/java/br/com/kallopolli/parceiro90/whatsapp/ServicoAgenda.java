@@ -37,12 +37,13 @@ public class ServicoAgenda {
     public int ativarJornada(String colaboradorId, LocalDate dataAdmissao) {
         Instant agora = clock.instant(); var zone = configZone(); int criadas = 0, indice = 0;
         for (int dia = 1; dia <= 90; dia++) {
-            if (!config.diaPrevisto(dia)) continue;
+            boolean ponte=config.getPonteDias().contains(dia);
+            if (!ponte && !config.diaPrevisto(dia)) continue;
             indice++;
             LocalDate dataMensagem = dataAdmissao.plusDays(dia - 1L);
             Instant quando = dataMensagem.atTime(config.getInicioJanela()).atZone(zone).toInstant();
             if (quando.isBefore(agora)) continue;
-            String tipo = config.getPonteDias().contains(dia) ? "PONTE" : indice % 4 == 0 ? "PILULA" : "CHECKIN";
+            String tipo = ponte ? "PONTE" : indice % 4 == 0 ? "PILULA" : "CHECKIN";
             criadas += jdbc.update("INSERT INTO mensagem_agendada(id,colaborador_id,tipo,dia_jornada,agendada_para,status) VALUES (?,?,?,?,?,'PENDENTE') ON CONFLICT(colaborador_id,tipo,dia_jornada) DO NOTHING",
                 UUID.randomUUID(), colaboradorId, tipo, dia, Timestamp.from(quando));
         }

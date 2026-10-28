@@ -1,0 +1,6 @@
+package br.com.kallopolli.parceiro90.relato;
+
+public enum Categoria {
+    CANSACO, SOBRECARGA, DESMOTIVACAO, VONTADE_DE_SAIR, DUVIDA, CONFLITO_COLEGA,
+    CONFLITO_CHEFIA, ASSEDIO, SITUACAO_GRAVE, NEUTRO
+}

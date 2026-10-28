@@ -1,4 +1,4 @@
-import { getDashboardData, getPerfil, getRelatos, getSerieMensal, getBemestar } from "./api.js";
+import { getDashboardData, getPerfil, getRelatos, getRelato, atualizarRelato, logout, getSerieMensal, getBemestar } from "./api.js";
 import { h, icon } from "./ui.js";
 import { renderEmployees } from "./views/funcionarios.js";
 import { renderAlerts } from "./views/alertas.js";
@@ -12,7 +12,7 @@ const routes = [
   ["#/alertas", "Alertas", "warning"], ["#/relatos", "Relatos", "inbox"],
   ["#/bem-estar", "Bem-estar", "heart"], ["#/relatorios", "Relatórios", "chart"]
 ];
-const state = { data: null, profile: null, query: "", employeeId: null, alertId: null, reportId: null, wellbeingId: null, detailsOpen: true, pageData: {}, loadingPage: "", pageError: "" };
+const state = { data: null, profile: null, query: "", employeeId: null, alertId: null, reportId: null, relatoDetalhe: null, wellbeingId: null, detailsOpen: true, pageData: {}, loadingPage: "", pageError: "" };
 const root = document.querySelector("#app");
 
 function currentRoute() {
@@ -31,7 +31,7 @@ function render() {
   const mobileNav = h("nav", { className: "mobile-nav", "aria-label": "Navegação principal" }, ...routes.map((route) => navLink(route, path, state.data?.kpis.semRetorno24h)));
   const sidebar = h("aside", { className: "sidebar" },
     h("div", { className: "brand" }, h("span", { className: "brand-mark" }, h("img", { src: "img/mcdonalds-logo.svg", alt: "" })), h("div", {}, h("strong", {}, "Kallopolli"), h("small", {}, "Pessoas & Cultura"))),
-    nav, h("div", { className: "profile" }, h("span", { className: "avatar avatar-lime", "aria-hidden": "true" }, "FR"), h("div", {}, h("strong", {}, "Fernanda Rocha"), h("small", {}, state.profile === "GERENTE" ? "Gerente" : "Gestora de RH")), h("span", { className: "more", "aria-hidden": "true" }, "•••")));
+    nav, h("div", { className: "profile" }, h("span", { className: "avatar avatar-lime", "aria-hidden": "true" }, "FR"), h("div", {}, h("strong", {}, "Conta autenticada"), h("small", {}, state.profile === "GERENTE" ? "Gerente" : "Gestora de RH")), h("button", { type: "button", className: "side-logout", "aria-label": "Sair do painel", onClick: logout }, "Sair")));
   const search = h("label", { className: "search" }, icon("search"), h("input", { type: "search", value: state.query, placeholder: "Buscar funcionário ou alerta...", "aria-label": "Buscar funcionário ou alerta" }), h("kbd", {}, "Ctrl K"));
   search.querySelector("input").addEventListener("input", (event) => { state.query = event.currentTarget.value; render(); const field = root.querySelector(".topbar .search input"); field?.focus(); field?.setSelectionRange(state.query.length, state.query.length); });
   const topbar = h("header", { className: "topbar" }, h("div", { className: "mobile-brand" }, h("span", { className: "brand-mark" }, h("img", { src: "img/mcdonalds-logo.svg", alt: "" })), h("strong", {}, "Kallopolli")), search, h("button", { type: "button", className: "icon-button", "aria-label": "Notificações" }, icon("bell"), h("span", {})));
@@ -44,7 +44,7 @@ function render() {
     content = renderOverview({ data: state.data, serie: extra.serie, relatosNovos: state.profile === "RH" ? extra.relatos.filter((item) => item.status === "NOVO").length : null, onNavigate: navigate });
   } else if (path === "#/funcionarios") content = renderEmployees({ data: state.data, query: state.query, selectedId: state.employeeId, onSelect: (id) => { state.employeeId = id; state.detailsOpen = true; render(); }, detailsOpen: state.detailsOpen, onClose: closeDetails });
   else if (path === "#/alertas") content = renderAlerts({ data: state.data, query: state.query, selectedId: state.alertId, onSelect: (id) => { state.alertId = id; state.detailsOpen = true; render(); }, detailsOpen: state.detailsOpen, onClose: closeDetails });
-  else if (path === "#/relatos") content = renderRelatos({ profile: state.profile, reports: state.profile === "RH" ? state.pageData[path]?.relatos || [] : [], query: state.query, selectedId: state.reportId, detailsOpen: state.detailsOpen, onSelect: (id) => { state.reportId = id; state.detailsOpen = true; render(); }, onClose: closeDetails, onUpdate: render });
+  else if (path === "#/relatos") content = renderRelatos({ profile: state.profile, reports: state.profile === "RH" ? state.pageData[path]?.relatos || [] : [], detail: state.relatoDetalhe, query: state.query, selectedId: state.reportId, detailsOpen: state.detailsOpen, onSelect: async (id) => { state.reportId = id; state.relatoDetalhe = null; state.detailsOpen = true; render(); try { state.relatoDetalhe = await getRelato(id); } catch (error) { state.pageError = error.message; } render(); }, onClose: closeDetails, onUpdate: async (update) => { try { state.relatoDetalhe = await atualizarRelato(state.reportId, update); const row = state.pageData[path].relatos.find((item) => item.protocolo === state.reportId); if (row) row.status = update.status; render(); } catch (error) { state.pageError = error.message; render(); } } });
   else if (path === "#/bem-estar") content = renderWellbeing({ data: { bemestar: state.pageData[path].bemestar, colaboradores: state.data.colaboradores }, profile: state.profile, query: state.query, selectedId: state.wellbeingId, detailsOpen: state.detailsOpen, onSelect: (id) => { state.wellbeingId = id; state.detailsOpen = true; render(); }, onClose: closeDetails });
   else if (path === "#/relatorios") content = renderRelatorios({ serie: state.pageData[path].serie, colaboradores: state.data.colaboradores, kpis: state.data.kpis, onUpdate: render });
   else content = placeholder(active?.[1] || "Página", path);

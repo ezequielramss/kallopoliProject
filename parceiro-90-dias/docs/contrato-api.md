@@ -1,6 +1,6 @@
 # Contrato da API (proposta)
 
-Todos os endpoints usam JSON UTF-8. Erros devem retornar `{ "erro": { "codigo": "...", "mensagem": "..." } }`; `401` encerra a sessão e solicita novo acesso. Datas e horas são ISO 8601 com fuso. Os exemplos são fictícios.
+Todos os endpoints usam JSON UTF-8. Erros seguem `ProblemDetail` (RFC 7807), com mensagens em português e sem detalhes internos; `401` encerra a sessão e solicita novo acesso. Datas e horas são ISO 8601 com fuso. Os exemplos são fictícios.
 
 ## `GET /api/kpis`
 
@@ -24,10 +24,10 @@ Retorna uma lista com `id`, `nome`, `iniciais`, `funcao`, `loja`, `diaJornada`, 
 
 ## `GET /api/alertas?status=&destino=`
 
-`status` aceita `ABERTO`, `ATENDIDO` ou `SEM_RETORNO_24H`; `destino` aceita `GERENTE` ou `RH`. Para categorias confidenciais (`ASSEDIO`, `CONFLITO_CHEFIA`), `colaboradorId` deve ser `null`; a resposta não deve incluir nome ou identificador pessoal.
+`status` aceita `ABERTO`, `ATENDIDO` ou `SEM_RETORNO_24H`; `destino` aceita `GERENTE` ou `RH`. Para categorias confidenciais (`ASSEDIO`, `CONFLITO_CHEFIA`), a resposta não inclui as chaves `colaboradorId`, `nome` ou `iniciais`.
 
 ```json
-[{"id":"a01","colaboradorId":null,"protocolo":"PD90-2026-0140","categoria":"CONFLITO_CHEFIA","severidade":"ALTA","destino":"RH","destinatarioNome":"Equipe de RH","criadoEm":"2026-10-26T08:10:00-03:00","status":"SEM_RETORNO_24H","retorno":null,"respondidoEm":null,"lembreteEnviadoEm":"2026-10-27T08:10:00-03:00","sugestao":"Vale uma conversa ainda hoje","colaboradorAvisado":true}]
+[{"id":"a01","protocolo":"PD90-2026-0140","categoria":"CONFLITO_CHEFIA","severidade":"ALTA","destino":"RH","destinatarioNome":"Equipe de RH","criadoEm":"2026-10-26T08:10:00-03:00","status":"SEM_RETORNO_24H","retorno":null,"respondidoEm":null,"lembreteEnviadoEm":"2026-10-27T08:10:00-03:00","sugestao":"Vale uma conversa ainda hoje","colaboradorAvisado":true}]
 ```
 
 Categorias: `CANSACO`, `SOBRECARGA`, `DESMOTIVACAO`, `VONTADE_DE_SAIR`, `DUVIDA`, `CONFLITO_COLEGA`, `CONFLITO_CHEFIA`, `ASSEDIO`, `SITUACAO_GRAVE`. Destinos de `CONFLITO_CHEFIA` e `ASSEDIO` são RH; `SITUACAO_GRAVE` também vai a RH. As demais categorias são encaminhadas ao gerente.
@@ -42,17 +42,18 @@ O cliente consulta o perfil antes de carregar relatos. Somente `RH` pode chamar 
 
 ## `GET /api/relatos` (somente perfil RH)
 
-Aceita filtro opcional `status`. A lista contém protocolo, título, categoria, severidade, status e data; não retorna loja, turno, telefone nem dados de identificação.
+Aceita filtro opcional `status` e paginação `page`/`size`. A lista inclui somente `protocolo`, `titulo`, `categoria`, `severidade`, `status` e `criadoEm`; loja, turno, conteúdo e histórico ficam disponíveis apenas no detalhe autorizado. Os exemplos de lista ficam em `dashboard/mock/relatos-lista.json`.
 
 ```json
-[{"protocolo":"AN-1048","titulo":"Tratamento inadequado durante o turno","categoria":"HUMILHACAO","severidade":"ALTA","status":"NOVO","criadoEm":"2026-10-27T09:24:00-03:00","loja":"Centro","turno":"Noite","conteudo":"Orientações foram feitas diante da equipe em tom ofensivo.","historico":[{"titulo":"Relato recebido","data":"2026-10-27T09:24:00-03:00","descricao":"Registro recebido pelo canal confidencial."}]}]
+[{"protocolo":"AN-1048","titulo":"Tratamento inadequado durante o turno","categoria":"HUMILHACAO","severidade":"ALTA","status":"NOVO","criadoEm":"2026-10-27T09:24:00-03:00"}]
 ```
 
-Loja, turno e conteúdo detalhado são retornados para exibição somente no detalhe e sob autorização RH.
+## `GET /api/relatos/{protocolo}` (somente perfil RH)
 
-## `PATCH /api/relatos/{protocolo}` (futuro)
+O detalhe é auditado em `auditoria_acesso` e usa o formato detalhado de `dashboard/mock/relatos.json`. Loja e turno aparecem apenas nesta rota.
+## `PATCH /api/relatos/{protocolo}` (somente perfil RH)
 
-Na Fase 2, mudança de status e observação interna existem somente na memória do navegador. A integração futura aceitará:
+Implementado na Fase 3A. Exige token CSRF. Atualiza status e observação interna; salva histórico e auditoria. Campos desconhecidos são rejeitados.
 
 ```json
 {"status":"EM_ANALISE","observacaoInterna":"Análise iniciada pelo RH."}
@@ -74,7 +75,7 @@ Para o perfil RH, fornece distribuição e acompanhamentos com categoria e resum
 {"itens":[{"mes":"Mai","estavel":23,"atencao":10,"prioridade":5,"presenca":92},{"mes":"Jun","estavel":25,"atencao":9,"prioridade":5,"presenca":93},{"mes":"Jul","estavel":27,"atencao":8,"prioridade":4,"presenca":94},{"mes":"Ago","estavel":28,"atencao":7,"prioridade":4,"presenca":94},{"mes":"Set","estavel":29,"atencao":6,"prioridade":4,"presenca":95},{"mes":"Out","estavel":31,"atencao":5,"prioridade":2,"presenca":95}]}
 ```
 
-## `POST /api/relatorios/gerar` (futuro: IA)
+## `POST /api/relatorios/gerar` (stub da Fase 3A)
 
 ```json
 {"escopo":"FUNCIONARIO","publico":"DIRECAO","colaboradorId":"c03"}

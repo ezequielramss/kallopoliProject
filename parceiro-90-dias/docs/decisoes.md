@@ -17,4 +17,11 @@
 - Nenhuma tela usa diagnóstico, pontuação individual de risco ou linguagem de vigilância.
 - A identidade de marca e a fonte Speedee seguem a autorização indicada pela Kallopolli.
 - Relatórios assistidos por IA mostram o aviso “Gerado por IA — revise antes de compartilhar.”; nomes individuais são omitidos para o público Direção.
-- Atualizações de status e observações de relatos são locais nesta fase. A gravação no backend exigirá o endpoint `PATCH /api/relatos/{protocolo}` e controle de acesso.
+- O PATCH de relato persiste o status e a observação interna, acrescenta histórico e grava auditoria pelo backend.
+
+## Backend Fase 3A
+
+- O `GET /api/relatos` devolve apenas campos de resumo. O mock anterior misturava resumo e detalhe no mesmo array; foi criado `relatos-lista.json` e `relatos.json` permanece como fixture de detalhe.
+- Em alertas `ASSEDIO` e `CONFLITO_CHEFIA`, o backend remove `colaboradorId`, nome e iniciais da resposta. O mock foi alinhado a essa regra de privacidade.
+- O CSRF usa `CookieCsrfTokenRepository`: o endpoint público `GET /csrf` inicializa o cookie `XSRF-TOKEN`; chamadas de alteração enviam o cookie no cabeçalho `X-XSRF-TOKEN`. A sessão usa `JSESSIONID` HttpOnly, SameSite=Lax e expiração por inatividade de 30 minutos; produção ativa Secure.
+- Os dados demonstrativos são copiados idempotentemente dos JSONs para o PostgreSQL no perfil `dev`; o contrato da API lê do banco. O relatório permanece fixture e é devolvido por stub enquanto `app.ia.enabled=false`.

@@ -4,12 +4,9 @@ const statusText = { NOVO: "Novo", EM_ANALISE: "Em análise", CONCLUIDO: "Conclu
 const severityText = { ALTA: "Alta", MODERADA: "Atenção", BAIXA: "Baixa" };
 let selectedProtocol = null;
 let statusFilter = "Todos";
-const localChanges = new Map();
-
-function renderRelatos({ profile, reports = [], query = "", selectedId, detailsOpen = true, onSelect, onClose, onUpdate }) {
+function renderRelatos({ profile, reports = [], detail, query = "", selectedId, detailsOpen = true, onSelect, onClose, onUpdate }) {
   if (profile !== "RH") return restrictedPage();
-  const selected = reports.find((report) => report.protocolo === (selectedId || selectedProtocol)) || reports[0];
-  if (!selectedProtocol && selected) selectedProtocol = selected.protocolo;
+  const selected = reports.find((report) => report.protocolo === (selectedId || selectedProtocol));
   const term = query.toLocaleLowerCase("pt-BR");
   const visible = reports.filter((report) => {
     const status = getLocalStatus(report);
@@ -20,8 +17,8 @@ function renderRelatos({ profile, reports = [], query = "", selectedId, detailsO
     h("div", { className: "report-queue-head" }, h("div", {}, h("h2", {}, "Relatos recebidos"), h("p", {}, `${visible.length} registros exibidos`)), h("label", { className: "employee-search report-search" }, icon("search", 16), h("input", { type: "search", value: query, placeholder: "Buscar protocolo ou título", "aria-label": "Buscar relatos por protocolo, título ou categoria" }))),
     buildFilters(), h("div", { className: "report-queue-list", role: "list", "aria-label": "Lista de relatos" }, ...visible.map((report) => reportRow(report, selected, onSelect))));
   list.querySelector("input").addEventListener("input", (event) => document.dispatchEvent(new CustomEvent("dashboard-search", { detail: { query: event.currentTarget.value, source: "relatos" } })));
-  const detail = selected && detailsOpen ? reportDetail(selected, onUpdate, onClose) : null;
-  return h("div", {}, heading, h("section", { className: "reports-workspace" }, list, detail));
+  const detailPanel = selected && detailsOpen ? (detail?.protocolo === selected.protocolo ? reportDetail(detail, onUpdate, onClose) : h("article", { className: "panel report-reader", "aria-live": "polite" }, h("p", {}, "Carregando detalhe confidencial..."))) : null;
+  return h("div", {}, heading, h("section", { className: "reports-workspace" }, list, detailPanel));
 }
 
 function buildFilters() {
@@ -39,7 +36,7 @@ function buildFilters() {
 }
 
 function reportRow(report, selected, onSelect) {
-  const status = getLocalStatus(report);
+  const status = report.status;
   const row = h("button", { type: "button", className: `report-queue-row ${selected?.protocolo === report.protocolo ? "selected" : ""}`, role: "listitem", "aria-label": `Abrir relato ${report.protocolo}: ${report.titulo}` },
     h("span", { className: `queue-priority severity-${report.severidade.toLowerCase()}` }),
     h("span", { className: "queue-report-copy" }, h("span", { className: "queue-meta" }, h("b", {}, report.protocolo), h("small", {}, formatTime(report.criadoEm))), h("strong", {}, report.titulo), h("span", { className: "queue-tags" }, badge(severityText[report.severidade] || report.severidade, `severity severity-${report.severidade.toLowerCase()}`), badge(categoryLabel(report.categoria), "report-category"), badge(statusText[status], `status-badge status-${status.toLowerCase()}`))));
@@ -48,11 +45,10 @@ function reportRow(report, selected, onSelect) {
 }
 
 function reportDetail(report, onUpdate, onClose) {
-  const local = localChanges.get(report.protocolo) || { status: report.status, observation: "", extraHistory: [] };
-  const history = [...report.historico, ...local.extraHistory].sort((a, b) => new Date(a.data) - new Date(b.data));
+  const history = [...(report.historico || [])].sort((a, b) => new Date(a.data) - new Date(b.data));
   const statusSelect = h("select", { "aria-label": "Status local do caso" }, ...Object.entries(statusText).map(([value, text]) => h("option", { value }, text)));
-  statusSelect.value = local.status;
-  const observation = h("textarea", { rows: 3, placeholder: "Registre uma observação interna do RH", "aria-label": "Observação interna do RH", value: local.observation });
+  statusSelect.value = report.status;
+  const observation = h("textarea", { rows: 3, placeholder: "Registre uma observação interna do RH", "aria-label": "Observação interna do RH" });
   const detail = h("article", { className: "panel report-reader", "aria-label": `Detalhe do relato ${report.protocolo}` },
     h("button", { type: "button", className: "close-detail", "aria-label": "Fechar detalhe do relato", onClick: onClose }, icon("close", 17)),
     h("header", { className: "reader-head" }, h("div", {}, h("span", { className: "eyebrow" }, `PROTOCOLO ${report.protocolo}`), h("h2", {}, report.titulo), h("p", {}, `Recebido ${formatDate(report.criadoEm)}`)), badge(severityText[report.severidade] || report.severidade, `severity severity-${report.severidade.toLowerCase()}`)),
@@ -60,21 +56,15 @@ function reportDetail(report, onUpdate, onClose) {
     h("div", { className: "confidential-caution" }, icon("lock", 15), h("p", {}, "Ao agir, considere que loja e turno podem permitir identificar quem relatou.")),
     h("div", { className: "report-content" }, h("span", {}, "CONTEÚDO DO RELATO"), h("p", {}, report.conteudo)),
     h("section", { className: "case-timeline" }, h("h3", {}, "Histórico do caso"), ...(history.length ? history.map((event) => timelineEntry(event)) : [h("p", {}, "Ainda não há atualizações." )])),
-    h("section", { className: "case-management" }, h("div", { className: "management-head" }, h("h2", {}, "Gestão do caso"), h("p", {}, "Alterações nesta tela são locais e não são persistidas.")), h("label", { className: "management-field" }, h("span", {}, "Status"), statusSelect), h("label", { className: "management-field" }, h("span", {}, "Observação interna do RH"), observation), h("button", { type: "button", className: "button button-secondary save-local" }, "Salvar atualização local")));
+    h("section", { className: "case-management" }, h("div", { className: "management-head" }, h("h2", {}, "Gestão do caso"), h("p", {}, "Atualizações são registradas no sistema.")), h("label", { className: "management-field" }, h("span", {}, "Status"), statusSelect), h("label", { className: "management-field" }, h("span", {}, "Observação interna do RH"), observation), h("button", { type: "button", className: "button button-secondary save-local" }, "Salvar atualização")));
   detail.querySelector(".save-local").addEventListener("click", () => {
-    const previousStatus = local.status;
-    local.status = statusSelect.value;
-    local.observation = observation.value.trim();
-    if (local.status !== previousStatus || local.observation) local.extraHistory.push({ titulo: local.status !== previousStatus ? `Status atualizado para ${statusText[local.status]}` : "Observação interna registrada", data: new Date().toISOString(), descricao: local.observation || "Atualização local do caso." });
-    localChanges.set(report.protocolo, local);
-    onUpdate();
+    onUpdate({ status: statusSelect.value, observacaoInterna: observation.value.trim() || null });
   });
   return detail;
 }
 
 function contextCell(label, value) { return h("div", {}, h("span", {}, label), h("strong", {}, value)); }
 function timelineEntry(event) { return h("div", { className: "timeline-item done" }, h("span", { className: "timeline-dot", "aria-hidden": "true" }), h("div", {}, h("strong", {}, event.titulo), h("small", {}, `${formatDate(event.data)} · ${event.descricao}`))); }
-function getLocalStatus(report) { return localChanges.get(report.protocolo)?.status || report.status; }
 function categoryLabel(category) { return ({ ASSEDIO: "Assédio", HUMILHACAO: "Humilhação", CONFLITO_CHEFIA: "Conflito com chefia", CONDUTA_INADEQUADA: "Conduta inadequada", CONDICOES_TRABALHO: "Condições de trabalho" })[category] || category; }
 function restrictedPage() { return h("section", { className: "placeholder" }, h("article", { className: "panel access-restricted" }, icon("lock", 28), h("h1", {}, "Acesso restrito"), h("p", {}, "Relatos confidenciais estão disponíveis somente para o perfil RH."))); }
 

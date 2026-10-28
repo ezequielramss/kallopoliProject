@@ -1,0 +1,50 @@
+[
+    {
+        "protocolo":  "AN-1048",
+        "titulo":  "Tratamento inadequado durante o turno",
+        "categoria":  "HUMILHACAO",
+        "severidade":  "ALTA",
+        "status":  "NOVO",
+        "criadoEm":  "2026-10-27T09:24:00-03:00"
+    },
+    {
+        "protocolo":  "AN-1047",
+        "titulo":  "Conflito recorrente com a liderança",
+        "categoria":  "CONFLITO_CHEFIA",
+        "severidade":  "ALTA",
+        "status":  "EM_ANALISE",
+        "criadoEm":  "2026-10-26T08:21:00-03:00"
+    },
+    {
+        "protocolo":  "AN-1046",
+        "titulo":  "Comentário desconfortável no ambiente",
+        "categoria":  "CONDUTA_INADEQUADA",
+        "severidade":  "MODERADA",
+        "status":  "NOVO",
+        "criadoEm":  "2026-10-25T17:46:00-03:00"
+    },
+    {
+        "protocolo":  "AN-1045",
+        "titulo":  "Escala alterada sem comunicação",
+        "categoria":  "CONDICOES_TRABALHO",
+        "severidade":  "MODERADA",
+        "status":  "EM_ANALISE",
+        "criadoEm":  "2026-10-24T14:10:00-03:00"
+    },
+    {
+        "protocolo":  "AN-1044",
+        "titulo":  "Pedido de orientação sobre procedimento",
+        "categoria":  "CONDICOES_TRABALHO",
+        "severidade":  "BAIXA",
+        "status":  "CONCLUIDO",
+        "criadoEm":  "2026-10-22T12:32:00-03:00"
+    },
+    {
+        "protocolo":  "AN-1043",
+        "titulo":  "Desentendimento entre colegas",
+        "categoria":  "CONDUTA_INADEQUADA",
+        "severidade":  "BAIXA",
+        "status":  "CONCLUIDO",
+        "criadoEm":  "2026-10-20T16:05:00-03:00"
+    }
+]

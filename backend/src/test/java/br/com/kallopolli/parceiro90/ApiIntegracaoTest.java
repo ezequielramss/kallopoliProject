@@ -105,6 +105,33 @@ class ApiIntegracaoTest {
     @Test void anonimoRecebe401() throws Exception { mvc.perform(get("/api/kpis")).andExpect(status().isUnauthorized()); }
     @Test void arquivosDosMocksNaoFicamPublicos() throws Exception { mvc.perform(get("/mock/relatos.json")).andExpect(status().isNotFound()); }
 
+    @Test void webhookValidaAssinaturaDeduplicaEGuardaTextoCifrado() throws Exception {
+        String textoPrivado="conteudo-privado-"+java.util.UUID.randomUUID();
+        String wamid="wamid.test."+java.util.UUID.randomUUID();
+        String bruto="{\"entry\":[{\"changes\":[{\"value\":{\"messages\":[{\"from\":\"5511999990000\",\"id\":\""+wamid+"\",\"type\":\"text\",\"text\":{\"body\":\""+textoPrivado+"\"}}]}}]}]}";
+        byte[] corpo=bruto.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        mvc.perform(post("/webhook/whatsapp").contentType("application/json").content(corpo)).andExpect(status().isForbidden());
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM webhook_evento WHERE wamid=?",Integer.class,wamid));
+        String assinatura=br.com.kallopolli.parceiro90.whatsapp.AssinaturaWebhook.calcular(corpo,"test-only-meta-app-secret");
+        for(int i=0;i<2;i++)mvc.perform(post("/webhook/whatsapp").header("X-Hub-Signature-256",assinatura).contentType("application/json").content(corpo))
+                .andExpect(status().isOk()).andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString(textoPrivado))));
+        long limite=System.currentTimeMillis()+5000;
+        while(System.currentTimeMillis()<limite&&jdbc.queryForObject("SELECT count(*) FROM webhook_evento WHERE wamid=? AND estado='PROCESSADO'",Integer.class,wamid)==0)Thread.sleep(20);
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM mensagem_entrada WHERE wamid=?",Integer.class,wamid));
+        String cifrado=jdbc.queryForObject("SELECT conteudo_cifrado FROM mensagem_entrada WHERE wamid=?",String.class,wamid);
+        assertNotEquals(textoPrivado,cifrado);assertFalse(cifrado.contains(textoPrivado));
+    }
+
+    @Test @WithMockUser(username="rh@test.local", roles="RH") void cadastroExigeConsentimentoEDevolveTelefoneMascarado() throws Exception {
+        String telefone="+55119"+String.format(java.util.Locale.ROOT,"%08d",new java.util.Random().nextInt(100_000_000));
+        Long loja=jdbc.queryForObject("SELECT id FROM loja WHERE nome='Centro'",Long.class);
+        String body="{\"nome\":\"Pessoa Teste\",\"funcao\":\"Atendente\",\"lojaId\":"+loja+",\"telefone\":\""+telefone+"\",\"consentimentoEm\":\"2026-10-01T10:00:00Z\",\"dataAdmissao\":\"2026-10-01\"}";
+        String resposta=mvc.perform(post("/api/colaboradores").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
+                .contentType("application/json").content(body)).andExpect(status().isOk()).andExpect(jsonPath("$.participacaoStatus").value("PENDENTE_OPTIN"))
+                .andExpect(jsonPath("$.telefoneMascarado").exists()).andReturn().getResponse().getContentAsString();
+        assertFalse(resposta.contains(telefone));
+    }
+
     @Test @WithMockUser(username="rh@test.local", roles="RH") void contratosPreservamChavesETiposDosMocks() throws Exception {
         compararMock("/api/kpis", "kpis.json", false);
         compararMock("/api/kpis/serie-mensal", "serie-mensal.json", false);

@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: parceiro-90-dias
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/parceiro90}
+    username: ${DATABASE_USER:parceiro}
+    password: ${DATABASE_PASSWORD:parceiro}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+server:
+  servlet:
+    session:
+      timeout: ${APP_SESSION_TIMEOUT:30m}
+      cookie:
+        http-only: true
+        same-site: lax
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+app:
+  ia:
+    enabled: false
+  hash-key: ${APP_HASH_KEY:}
+  crypto-key: ${APP_CRYPTO_KEY:}
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true
